@@ -1,0 +1,5 @@
+[project]
+name = "api-device"
+version = "0.1.0"
+description = "Device API microservice for IoT Hub Alpha"
+requires-python = ">=3.13"
