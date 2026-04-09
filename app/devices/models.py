@@ -11,6 +11,10 @@ class DeviceType(models.Model):
         VIBRATION = "vibration", "Vibration"
         TEMPERATURE = "temperature", "Temperature"
         PRESSURE = "pressure", "Pressure"
+        POWER = "power", "Power"
+        FLOW = "flow", "Flow"
+        HUMIDITY = "humidity", "Humidity"
+        CURRENT = "current", "Current"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100, unique=True)
