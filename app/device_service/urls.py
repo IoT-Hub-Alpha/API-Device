@@ -9,4 +9,5 @@ urlpatterns = [
     path("ready/", ready, name="ready"),
     path("v1/devices/", include("devices.urls_devices")),
     path("v1/device-types/", include("devices.urls_device_types")),
+    path("v1/telemetry-schemas/", include("devices.urls_telemetry_schemas")),
 ]

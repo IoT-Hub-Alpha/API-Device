@@ -6,6 +6,7 @@ from .views import (
     DeviceRegisterView,
     DeviceRegenerateTokenView,
     DeviceStatusView,
+    DeviceVerifyTokenView,
 )
 
 urlpatterns = [
@@ -13,6 +14,8 @@ urlpatterns = [
     path("", DeviceListView.as_view(), name="device-list"),
     # REGISTER (token generation)
     path("register/", DeviceRegisterView.as_view(), name="device-register"),
+    # VERIFY TOKEN (internal service use only)
+    path("verify-token/", DeviceVerifyTokenView.as_view(), name="device-verify-token"),
     # RETRIEVE + UPDATE + DELETE
     path("<uuid:device_id>/", DeviceDetailView.as_view(), name="device-detail"),
     # REGENERATE TOKEN

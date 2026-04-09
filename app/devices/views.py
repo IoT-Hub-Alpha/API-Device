@@ -11,7 +11,7 @@ from iot_auth.django import CheckPermissionsMixin
 from .models import Device
 from .serializers import DeviceSerializer, DeviceValidator, DeviceRepository
 from .exceptions import ApiValidationError, NotFoundError
-from .views_common import json_body, parse_uuid, handle_api_errors
+from .views_common import json_body, parse_uuid, handle_api_errors, InternalServiceMixin
 
 
 ALLOWED_ORDERING = {"created_at", "-created_at", "name", "-name", "last_seen", "-last_seen"}
@@ -39,9 +39,19 @@ class DeviceListView(CheckPermissionsMixin, View):
             )
 
         # --- Filtering (AC#5) ---
+        serial_number = request.GET.get("serial_number", "").strip()
+        if serial_number:
+            qs = qs.filter(serial_number=serial_number)
+
         status = request.GET.get("status", "").strip()
         if status:
             qs = qs.filter(status=status)
+
+        is_active = request.GET.get("is_active", "").strip().lower()
+        if is_active == "true":
+            qs = qs.exclude(status=Device.DeviceStatus.INACTIVE)
+        elif is_active == "false":
+            qs = qs.filter(status=Device.DeviceStatus.INACTIVE)
 
         device_type_id = request.GET.get("device_type_id", "").strip()
         if device_type_id:
@@ -229,6 +239,36 @@ class DeviceStatusView(CheckPermissionsMixin, View):
                 update_fields.append("last_seen")
 
             device.save(update_fields=update_fields)
+
+        return JsonResponse(
+            {"data": DeviceSerializer(instance=device).to_dict()}, status=200
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class DeviceVerifyTokenView(InternalServiceMixin):
+    """GET /v1/devices/verify-token/ — internal endpoint for service-to-service token check."""
+
+    @handle_api_errors
+    def get(self, request: HttpRequest):
+        serial_number = request.GET.get("serial_number", "").strip()
+        token = request.GET.get("token", "").strip()
+
+        if not serial_number or not token:
+            raise ApiValidationError(
+                {"detail": "Both 'serial_number' and 'token' query params are required."},
+                status_code=400,
+            )
+
+        try:
+            device = Device.objects.select_related("device_type").get(
+                serial_number=serial_number
+            )
+        except Device.DoesNotExist:
+            return JsonResponse({"detail": "Device not found."}, status=404)
+
+        if device.auth_token != token:
+            return JsonResponse({"detail": "Invalid token."}, status=401)
 
         return JsonResponse(
             {"data": DeviceSerializer(instance=device).to_dict()}, status=200

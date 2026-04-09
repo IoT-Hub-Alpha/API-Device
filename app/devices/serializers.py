@@ -206,6 +206,8 @@ class DeviceSerializer:
             dt = getattr(self.instance, k, None)
             payload[k] = dt.isoformat() if dt else None
 
+        payload["is_active"] = self.instance.status != Device.DeviceStatus.INACTIVE
+
         if include_token:
             payload["auth_token"] = self.instance.auth_token
             payload["token_generated_at"] = (

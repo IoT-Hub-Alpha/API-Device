@@ -118,3 +118,31 @@ class Device(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.serial_number})"
+
+
+class TelemetrySchema(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    version = models.CharField(max_length=50, unique=True)
+    is_active = models.BooleanField(default=True)
+    validation_schema = models.JSONField(
+        help_text="JSON Schema for telemetry payload validation"
+    )
+    transformation_rules = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Rules for transforming raw telemetry payload",
+    )
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "telemetry_schemas"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["version"], name="idx_telemetry_schema_version"),
+            models.Index(fields=["is_active"], name="idx_telemetry_schema_active"),
+        ]
+
+    def __str__(self):
+        return f"TelemetrySchema v{self.version} ({'active' if self.is_active else 'inactive'})"
